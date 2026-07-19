@@ -220,18 +220,26 @@ def seed_if_empty():
 
 # ---------- Helpers genericos de catalogo ----------
 
+_NAME_COLUMN = {"descripcion_gastos": "descripcion"}
+
+
 def fetch_catalogo(tabla, solo_activos=True):
+    name_col = _NAME_COLUMN.get(tabla, "nombre")
     q = f"SELECT * FROM {tabla}"
     if solo_activos:
         q += " WHERE activo = 1"
-    q += " ORDER BY nombre" if tabla != "surtidores" else " ORDER BY surtidor_num, manguera"
+    q += f" ORDER BY {name_col}" if tabla != "surtidores" else " ORDER BY surtidor_num, manguera"
     with get_conn() as conn:
         return [dict(r) for r in conn.execute(q).fetchall()]
 
 
 def add_catalogo_item(tabla, nombre):
+    name_col = _NAME_COLUMN.get(tabla, "nombre")
     with get_conn() as conn:
-        conn.execute(f"INSERT INTO {tabla}(nombre) VALUES (%s) ON CONFLICT (nombre) DO NOTHING", (nombre,))
+        conn.execute(
+            f"INSERT INTO {tabla}({name_col}) VALUES (%s) ON CONFLICT ({name_col}) DO NOTHING",
+            (nombre,)
+        )
 
 
 def set_catalogo_activo(tabla, item_id, activo):
