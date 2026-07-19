@@ -22,6 +22,7 @@ tabs = st.tabs(list(CATALOGOS.keys()) + ["Surtidores"])
 
 for tab, (label, tabla) in zip(tabs[:-1], CATALOGOS.items()):
     with tab:
+        name_col = "descripcion" if tabla == "descripcion_gastos" else "nombre"
         c1, c2 = st.columns([3, 1])
         nuevo = c1.text_input(f"Nuevo registro en {label}", key=f"new_{tabla}")
         if c2.button("Agregar", key=f"add_{tabla}") and nuevo.strip():
@@ -32,11 +33,11 @@ for tab, (label, tabla) in zip(tabs[:-1], CATALOGOS.items()):
         items = db.fetch_catalogo(tabla, solo_activos=False)
         if items:
             df = pd.DataFrame(items)
-            cols = [c for c in ["id", "nombre", "saldo_inicial", "activo"] if c in df.columns]
+            cols = [c for c in ["id", name_col, "saldo_inicial", "activo"] if c in df.columns]
             st.dataframe(df[cols], use_container_width=True, hide_index=True)
 
             desactivar_id = st.selectbox(f"Activar/Desactivar en {label}", options=[i["id"] for i in items],
-                                          format_func=lambda i: next(x["nombre"] for x in items if x["id"] == i),
+                                          format_func=lambda i: next(x[name_col] for x in items if x["id"] == i),
                                           key=f"tog_{tabla}")
             item_actual = next(x for x in items if x["id"] == desactivar_id)
             nuevo_estado = not bool(item_actual["activo"])
